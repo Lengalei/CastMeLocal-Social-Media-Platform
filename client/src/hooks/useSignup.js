@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import toast from 'react-hot-toast';
-import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { setAfterRegisteredData } from '../features/emailSent/afterRegisterDataSlice';
-import { useAuthContext } from '../context/AuthContext';
-import { UserLogin } from '../redux/userSlice';
-import { apiUrl } from '../utils/api';
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { setAfterRegisteredData } from "../features/emailSent/afterRegisterDataSlice";
+import { useAuthContext } from "../context/AuthContext";
+import { UserLogin } from "../redux/userSlice";
+import { apiUrl } from "../utils/api";
 
 const useSignup = () => {
   const dispatch = useDispatch();
@@ -36,8 +36,8 @@ const useSignup = () => {
     setLoading(true);
     try {
       const res = await fetch(`${apiUrl}/api/socials/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           firstName,
           lastName,
@@ -45,7 +45,7 @@ const useSignup = () => {
           password,
           gender,
         }),
-        credentials: 'include',
+        credentials: "include",
       });
 
       const data = await res.json();
@@ -55,9 +55,9 @@ const useSignup = () => {
 
       dispatch(UserLogin(data));
       dispatch(setAfterRegisteredData(data));
-      localStorage.setItem('chat-user', JSON.stringify(data));
+      localStorage.setItem("chat-user", JSON.stringify(data));
       setAuthUser(data);
-      navigate('/verification');
+      navigate("/");
       return { success: true };
     } catch (error) {
       toast.error(error.message);
@@ -81,28 +81,28 @@ function handleInputErrors({
   const errors = [];
 
   if (!firstName) {
-    errors.push('First Name is required');
+    errors.push("First Name is required");
   }
   if (!lastName) {
-    errors.push('Last Name is required');
+    errors.push("Last Name is required");
   }
   if (!email) {
-    errors.push('Email Address is required');
+    errors.push("Email Address is required");
   }
   if (!password) {
-    errors.push('Password is required');
+    errors.push("Password is required");
   }
   if (!confirmPassword) {
-    errors.push('Confirm Password is required');
+    errors.push("Confirm Password is required");
   }
   if (!gender) {
-    errors.push('Gender is required');
+    errors.push("Gender is required");
   }
   if (password !== confirmPassword) {
-    errors.push('Passwords do not match');
+    errors.push("Passwords do not match");
   }
   if (password.length < 6) {
-    errors.push('Password must be at least 6 characters');
+    errors.push("Password must be at least 6 characters");
   }
 
   return errors;

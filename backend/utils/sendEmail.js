@@ -1,10 +1,10 @@
-const nodemailer = require('nodemailer');
-const Mailjet = require('node-mailjet');
-const dotenv = require('dotenv');
-const { v4: uuidv4 } = require('uuid');
-const { hashString } = require('./index.js');
-const Verification = require('../models/socialModels/emailVerification.js');
-const PasswordReset = require('../models/socialModels/PasswordReset.js');
+const nodemailer = require("nodemailer");
+const Mailjet = require("node-mailjet");
+const dotenv = require("dotenv");
+const { v4: uuidv4 } = require("uuid");
+const { hashString } = require("./index.js");
+const Verification = require("../models/socialModels/emailVerification.js");
+const PasswordReset = require("../models/socialModels/PasswordReset.js");
 
 dotenv.config();
 
@@ -14,34 +14,47 @@ const {
   CL_URL,
   MAILJET_API_KEY,
   MAILJET_SECRET_KEY,
+  MAILER_HOST,
+  MAILER_PORT,
+  MAILER_USER,
+  MAILER_PASSWORD,
 } = process.env;
 
-let transporter = nodemailer.createTransport({
-  host: 'smtp-mail.outlook.com',
+const transporter = nodemailer.createTransport({
+  host: MAILER_HOST,
+  port: MAILER_PORT,
+  secure: false,
   auth: {
-    user: AUTH_EMAIL,
-    pass: AUTH_PASSWORD,
+    user: MAILER_USER,
+    pass: MAILER_PASSWORD,
+  },
+  debug: true, // Enable debugging output
+  logger: true, // Log to console
+  tls: {
+    ciphers: "SSLv3",
+    minVersion: "TLSv1",
+    rejectUnauthorized: false,
   },
 });
 
 const mailjet = new Mailjet({
-  apiKey: MAILJET_API_KEY || 'your-api-key',
-  apiSecret: MAILJET_SECRET_KEY || 'your-api-secret',
+  apiKey: MAILJET_API_KEY || "your-api-key",
+  apiSecret: MAILJET_SECRET_KEY || "your-api-secret",
 });
 
 async function sendMailjetEmail(mailOptions) {
   try {
-    const request = await mailjet.post('send', { version: 'v3.1' }).request({
+    const request = await mailjet.post("send", { version: "v3.1" }).request({
       Messages: [
         {
           From: {
             Email: mailOptions.from,
-            Name: 'CastMelocal',
+            Name: "CastMelocal",
           },
           To: [
             {
               Email: mailOptions.to,
-              Name: mailOptions.toName || '',
+              Name: mailOptions.toName || "",
             },
           ],
           Subject: mailOptions.subject,
@@ -51,8 +64,8 @@ async function sendMailjetEmail(mailOptions) {
     });
     return request.body;
   } catch (error) {
-    console.error('Mailjet error:', error);
-    throw new Error('Mailjet email sending failed');
+    console.error("Mailjet error:", error);
+    throw new Error("Mailjet email sending failed");
   }
 }
 
@@ -61,20 +74,20 @@ async function sendNodemailerEmail(mailOptions) {
     await transporter.sendMail(mailOptions);
     return { success: true };
   } catch (error) {
-    console.error('Nodemailer error:', error);
-    throw new Error('Nodemailer email sending failed');
+    console.error("Nodemailer error:", error);
+    throw new Error("Nodemailer email sending failed");
   }
 }
 
 exports.sendVerificationEmail = async (regUser) => {
   const { _id, email, lastName } = regUser;
   const token = _id + uuidv4();
-  const link = `https://castmelocal-frontend.onrender.com/verifylink/${_id}/${token}`; //cl_URL is the hosted endpoint
+  const link = `${CL_URL}/verifylink/${_id}/${token}`; //cl_URL is the hosted endpoint
   //http://localhost:5173/api/socials/users/verify/ + _id + '/' + token
   const mailOptions = {
     from: AUTH_EMAIL,
     to: email,
-    subject: 'Email Verification',
+    subject: "Email Verification",
     html: `
       <div style='font-family: Arial, sans-serif; font-size: 20px; color: #333; background-color: #f7f7f7; padding: 20px; border-radius: 5px;'>
         <h3 style="color: rgb(8, 56, 188)">Please verify your email address</h3>
@@ -108,16 +121,16 @@ exports.sendVerificationEmail = async (regUser) => {
     if (newVerifiedEmail) {
       try {
         await sendMailjetEmail(mailOptions);
-        return { success: true, emailMessage: 'Email sent' };
+        return { success: true, emailMessage: "Email sent" };
       } catch (error) {
-        console.log('Mailjet failed, falling back to Nodemailer');
+        console.log("Mailjet failed, falling back to Nodemailer");
         await sendNodemailerEmail(mailOptions);
-        return { success: true, emailMessage: 'Email sent' }; // Assuming Nodemailer succeeded
+        return { success: true, emailMessage: "Email sent" }; // Assuming Nodemailer succeeded
       }
     }
   } catch (error) {
     console.log(error);
-    return { success: false, error: 'Failed to send verification email' };
+    return { success: false, error: "Failed to send verification email" };
   }
 };
 /*Reset Password Link */
@@ -129,7 +142,7 @@ exports.resetPasswordLink = async (user) => {
   const mailOptions = {
     from: AUTH_EMAIL,
     to: email,
-    subject: 'Password Reset',
+    subject: "Password Reset",
     html: `
       <p style="font-family: Arial, sans-serif; font-size: 16px; color: #333; background-color: #f7f7f7; padding: 20px; border-radius: 5px;">
         Password reset link. Please click the link below to reset password.
@@ -155,13 +168,13 @@ exports.resetPasswordLink = async (user) => {
       try {
         await sendMailjetEmail(mailOptions);
       } catch (error) {
-        console.log('Mailjet failed, falling back to Nodemailer');
+        console.log("Mailjet failed, falling back to Nodemailer");
         await sendNodemailerEmail(mailOptions);
       }
       return { success: true };
     }
   } catch (error) {
     console.log(error);
-    return { success: false, error: 'Failed to send reset password email' };
+    return { success: false, error: "Failed to send reset password email" };
   }
 };

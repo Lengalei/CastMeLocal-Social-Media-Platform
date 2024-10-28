@@ -1,17 +1,17 @@
-const SocialUsers = require('../../models/socialModels/userSocialModel.js');
-const { isEmail, isStrongPassword } = require('validator');
+const SocialUsers = require("../../models/socialModels/userSocialModel.js");
+const { isEmail, isStrongPassword } = require("validator");
 const {
   hashString,
   createJWT,
   compareString,
-} = require('../../utils/index.js');
-const { sendVerificationEmail } = require('../../utils/sendEmail.js');
+} = require("../../utils/index.js");
+const { sendVerificationEmail } = require("../../utils/sendEmail.js");
 const maxage = 2 * 24 * 60 * 60;
 
 /* Register */
 module.exports.register = async (req, res) => {
   const { firstName, lastName, email, password, gender } = req.body;
-  console.log('DataFromReq.body:', {
+  console.log("DataFromReq.body:", {
     firstName,
     lastName,
     email,
@@ -23,14 +23,14 @@ module.exports.register = async (req, res) => {
   if (!firstName || !lastName || !email || !password || !gender) {
     return res
       .status(400)
-      .json({ success: false, error: 'Provide Required Fields!' });
+      .json({ success: false, error: "Provide Required Fields!" });
   }
 
   // Validate correct Email
   if (!isEmail(email)) {
     return res
       .status(400)
-      .json({ success: false, error: 'Invalid email format' });
+      .json({ success: false, error: "Invalid email format" });
   }
 
   // Validate strong password
@@ -44,7 +44,7 @@ module.exports.register = async (req, res) => {
     })
   ) {
     const error =
-      'Password must contain:\n - At least one lowercase letter (a-z)\n - At least one uppercase letter (A-Z)\n - At least one number (0-9)\n - At least one special character (!@#$%^&*)';
+      "Password must contain:\n - At least one lowercase letter (a-z)\n - At least one uppercase letter (A-Z)\n - At least one number (0-9)\n - At least one special character (!@#$%^&*)";
     return res.status(400).json({ success: false, error });
   }
 
@@ -54,12 +54,12 @@ module.exports.register = async (req, res) => {
     if (userExist) {
       return res
         .status(400)
-        .json({ success: false, error: 'Email address already exists' });
+        .json({ success: false, error: "Email address already exists" });
     }
 
     const hashedPassword = await hashString(password);
     const profilePic =
-      gender === 'male'
+      gender === "male"
         ? `https://avatar.iran.liara.run/public/boy?username=${firstName}`
         : `https://avatar.iran.liara.run/public/girl?username=${firstName}`;
 
@@ -72,18 +72,18 @@ module.exports.register = async (req, res) => {
       profilePic,
     });
 
-    console.log('Registered user:', regUser);
+    console.log("Registered user:", regUser);
 
     //Send verification email to the user
-    const emailResult = await sendVerificationEmail(regUser);
-    console.log('results of SendEMail: ' + emailResult.emailMessage);
-    if (!emailResult.success) {
-      return res.status(500).json({
-        success: false,
-        error: emailResult.error,
-        // emailMessage: emailResult.emailMessage,
-      });
-    }
+    // const emailResult = await sendVerificationEmail(regUser);
+    // console.log('results of SendEMail: ' + emailResult.emailMessage);
+    // if (!emailResult.success) {
+    //   return res.status(500).json({
+    //     success: false,
+    //     error: emailResult.error,
+    //     // emailMessage: emailResult.emailMessage,
+    //   });
+    // }
 
     // Exclude the password from the user object
     regUser.password = undefined;
@@ -93,22 +93,22 @@ module.exports.register = async (req, res) => {
 
     res
       .status(201)
-      .cookie('jwt', token, {
+      .cookie("jwt", token, {
         httpOnly: true,
         maxAge: maxage * 1000,
-        sameSite: 'none', // Allows cross-site requests
+        sameSite: "none", // Allows cross-site requests
         secure: true, // Ensures the cookie is only sent over HTTPS
       })
       .json({
         success: true,
-        emailMessage: emailResult.emailMessage,
-        message: 'Registered successfully',
+        // emailMessage: emailResult.emailMessage,
+        message: "Registered successfully",
         regUser,
         token,
       });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, error: 'Server Error' });
+    res.status(500).json({ success: false, error: "Server Error" });
   }
 };
 
@@ -120,31 +120,31 @@ module.exports.login = async (req, res) => {
   if (!email || !password) {
     return res
       .status(400)
-      .json({ success: false, error: 'Please provide user credentials' });
+      .json({ success: false, error: "Please provide user credentials" });
   }
 
   try {
     // Find user by email
     const regUser = await SocialUsers.findOne({ email })
-      .select('+password') // Include password field
+      .select("+password") // Include password field
       .populate({
-        path: 'friends',
-        select: 'firstName lastName location profileUrl -password',
+        path: "friends",
+        select: "firstName lastName location profileUrl -password",
       });
 
     if (!regUser) {
       return res
         .status(400)
-        .json({ success: false, error: 'Invalid email or password' });
+        .json({ success: false, error: "Invalid email or password" });
     }
 
-    if (!regUser.verified) {
-      return res.status(400).json({
-        success: false,
-        error:
-          'User email is not verified. Check your email account and verify your email',
-      });
-    }
+    // if (!regUser.verified) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     error:
+    //       'User email is not verified. Check your email account and verify your email',
+    //   });
+    // }
 
     // Compare password
     const isMatch = await compareString(password, regUser.password);
@@ -152,7 +152,7 @@ module.exports.login = async (req, res) => {
     if (!isMatch) {
       return res
         .status(400)
-        .json({ success: false, error: 'Invalid email or password' });
+        .json({ success: false, error: "Invalid email or password" });
     }
 
     regUser.password = undefined; // Exclude password from response
@@ -161,21 +161,21 @@ module.exports.login = async (req, res) => {
 
     res
       .status(200)
-      .cookie('jwt', token, {
+      .cookie("jwt", token, {
         httpOnly: true,
         maxAge: maxage * 1000,
-        sameSite: 'none', // Allows cross-site requests
+        sameSite: "none", // Allows cross-site requests
         secure: true, // Ensures the cookie is only sent over HTTPS
       })
       .json({
         success: true,
-        message: 'Login successfully',
+        message: "Login successfully",
         regUser,
         token,
       });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, error: 'Server Error' });
+    res.status(500).json({ success: false, error: "Server Error" });
   }
 };
 
@@ -184,10 +184,10 @@ module.exports.logout = (req, res) => {
   try {
     res
       .status(200)
-      .cookie('jwt', '', { maxAge: new Date(0) })
-      .json({ message: 'Logged out successfully' });
+      .cookie("jwt", "", { maxAge: new Date(0) })
+      .json({ message: "Logged out successfully" });
   } catch (error) {
-    console.log('Error in logout controller', error.message);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.log("Error in logout controller", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };

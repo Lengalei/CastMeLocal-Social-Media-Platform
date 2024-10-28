@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const dbConnection = async () => {
   try {
@@ -7,9 +7,9 @@ const dbConnection = async () => {
       useUnifiedTopology: true,
     });
 
-    console.log('DB Connected Successfully');
+    console.log("DB Connected Successfully");
   } catch (error) {
-    console.log('DB Error: ' + error);
+    console.log("DB Error: " + error);
   }
 };
 
